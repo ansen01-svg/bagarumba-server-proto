@@ -18,8 +18,7 @@ export const getUploadUrl = async (req, res) => {
     const response = await axios.post(
       `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/stream/direct_upload`,
       {
-        maxDurationSeconds: 600, // 10 minutes
-        maxSizeBytes: 25 * 1024 * 1024, // 25 MB
+        maxDurationSeconds: 300,
         allowedOrigins: ["localhost:3000", "bagurumba.vercel.app"],
         meta: {
           userId: req.user._id.toString(),
