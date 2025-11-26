@@ -1,9 +1,9 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import mongoose from "mongoose";
 import morgan from "morgan";
 
+import connectDb from "./lib/connectDb.js";
 import authRoutes from "./routes/auth.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import videoRoutes from "./routes/video.route.js";
@@ -35,15 +35,12 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Connect to MongoDB and start server
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("Connected to MongoDB");
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("MongoDB connection error:", err);
+const startServer = async () => {
+  await connectDb();
+
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}...`);
   });
+};
+
+startServer();

@@ -7,8 +7,6 @@ dotenv.config();
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
 const CF_API_TOKEN = process.env.CF_API_TOKEN;
 
-console.log(CF_ACCOUNT_ID, CF_API_TOKEN);
-
 // Get upload URL from Cloudflare
 export const getUploadUrl = async (req, res) => {
   try {
