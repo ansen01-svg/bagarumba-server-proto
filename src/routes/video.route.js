@@ -3,6 +3,7 @@ import {
   getAllVideos,
   getUploadUrl,
   getUserVideos,
+  getVideoStatus,
   saveVideo,
   updateVideoStatus,
 } from "../controller/video.js";
@@ -18,5 +19,8 @@ router.post("/webhook/status", updateVideoStatus);
 router.post("/upload-url", authMiddleware, getUploadUrl);
 router.post("/save", authMiddleware, saveVideo);
 router.get("/my-videos", authMiddleware, getUserVideos);
+
+// Video status check (requires auth)
+router.get("/status/:videoId", authMiddleware, getVideoStatus);
 
 export default router;

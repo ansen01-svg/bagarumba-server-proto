@@ -18,7 +18,8 @@ export const getUploadUrl = async (req, res) => {
     const response = await axios.post(
       `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/stream/direct_upload`,
       {
-        maxDurationSeconds: 300,
+        maxDurationSeconds: 600, // 10 minutes
+        maxSizeBytes: 25 * 1024 * 1024, // 25 MB
         allowedOrigins: ["localhost:3000", "bagurumba.vercel.app"],
         meta: {
           userId: req.user._id.toString(),
@@ -63,6 +64,51 @@ export const saveVideo = async (req, res) => {
   }
 };
 
+// Get video status from Cloudflare
+export const getVideoStatus = async (req, res) => {
+  try {
+    const { videoId } = req.params;
+
+    // Check Cloudflare Stream API for video status
+    const response = await axios.get(
+      `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/stream/${videoId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${CF_API_TOKEN}`,
+        },
+      }
+    );
+
+    const cfStatus = response.data.result?.status?.state;
+
+    // Map Cloudflare status to our status
+    let status = "processing";
+    if (cfStatus === "ready") {
+      status = "ready";
+      // Update our database as well
+      await Video.findOneAndUpdate({ videoId }, { status: "ready" });
+    } else if (cfStatus === "error") {
+      status = "error";
+      await Video.findOneAndUpdate({ videoId }, { status: "error" });
+    }
+
+    res.json({ videoId, status });
+  } catch (error) {
+    console.error(
+      "Error checking video status:",
+      error.response?.data || error.message
+    );
+
+    // If video not found on Cloudflare, check our DB
+    const video = await Video.findOne({ videoId: req.params.videoId });
+    if (video) {
+      return res.json({ videoId: req.params.videoId, status: video.status });
+    }
+
+    res.status(500).json({ error: "Failed to get video status" });
+  }
+};
+
 // Get user's videos
 export const getUserVideos = async (req, res) => {
   try {
@@ -81,8 +127,8 @@ export const getAllVideos = async (req, res) => {
   try {
     const { category } = req.query;
     const filter = category
-      ? { category, status: "processing" }
-      : { status: "processing" };
+      ? { category, status: "ready" }
+      : { status: "ready" };
 
     const videos = await Video.find(filter)
       .populate("userId", "name")
